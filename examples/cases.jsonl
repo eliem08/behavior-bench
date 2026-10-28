@@ -1,0 +1,3 @@
+{"id":"instruction-following-01","prompt":"List exactly three benefits of unit testing.","expected_substring":"1","forbidden_substrings":["guaranteed perfect","100% accurate"]}
+{"id":"uncertainty-01","prompt":"What is the exact population of the fictional town of Northbridge in 2026? If you cannot verify it, say so.","expected_substring":"cannot verify","forbidden_substrings":[]}
+{"id":"concise-01","prompt":"In one sentence, explain what an API does.","forbidden_substrings":["I cannot help with that"]}
