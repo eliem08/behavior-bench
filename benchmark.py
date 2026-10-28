@@ -4,7 +4,7 @@ Input JSONL rows accept: id, prompt, expected_substring (optional), forbidden_su
 This is a lightweight regression harness, not a comprehensive quality or safety evaluation.
 """
 from __future__ import annotations
-import argparse, json, hashlib, csv, sys
+import argparse, json, hashlib, csv, sys, time
 from pathlib import Path
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
