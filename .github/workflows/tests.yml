@@ -24,7 +24,9 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - name: Compile application and dashboard modules
         run: python -m py_compile runtime.py app.py main.py dashboard.py
-      - name: Compile research workflow
-        run: python -m py_compile benchmark.py
+      - name: Compile application and reporting modules
+        run: python -m py_compile benchmark.py api_benchmark.py compare_models.py html_report.py provenance.py
+      - name: Compile tests
+        run: python -m py_compile tests/*.py
       - name: Run tests
         run: python -m pytest -q
