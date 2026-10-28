@@ -32,7 +32,15 @@ jobs:
       - name: Install Behavior Bench
         run: |
           python -m pip install --upgrade pip
-          python -m pip install git+https://github.com/eliem08/behavior-bench.git
+          git clone --depth 1 https://github.com/eliem08/behavior-bench.git .behavior-bench
+          python -m pip install -r .behavior-bench/requirements.txt
       - name: Run evaluation gate
         run: |
-          behavior-bench-api --help
+          python .behavior-bench/api_benchmark.py --base-url "$LLM_API_BASE_URL" --model-id "$LLM_MODEL_ID" --api-key-env LLM_API_KEY --cases examples/cases.jsonl --output outputs/behavior-bench --fail-on-regression
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-bench-report
+          path: outputs/behavior-bench/
+          if-no-files-found: ignore
