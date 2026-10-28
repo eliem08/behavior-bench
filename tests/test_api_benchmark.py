@@ -50,3 +50,13 @@ def test_api_completion_rejects_unexpected_response_shape(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout: FakeResponse({"choices": []}))
     with pytest.raises(ValueError, match="did not contain"):
         api_benchmark.api_completion("hello", "https://example.test/v1", "demo", "key")
+
+
+def test_api_completion_rejects_api_key_in_url(monkeypatch):
+    with pytest.raises(ValueError, match="query parameters"):
+        api_benchmark.api_completion("hello", "https://example.test/v1?api_key=secret", "demo", "key")
+
+
+def test_api_completion_requires_https_for_remote_hosts():
+    with pytest.raises(ValueError, match="HTTPS"):
+        api_benchmark.api_completion("hello", "http://api.example.test/v1", "demo", "key")
