@@ -1,0 +1,2 @@
+# The hosted API runner uses only Python's standard library.
+# No PyTorch, Transformers, or GPU libraries are required.
