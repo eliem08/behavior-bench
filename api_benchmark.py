@@ -71,6 +71,8 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
         forbidden = case.get("forbidden_substrings", [])
         rows.append({
             "id": case["id"],
+            "category": case["category"],
+            "severity": case["severity"],
             "prompt": case["prompt"],
             "completion": completion,
             "expected_substring": expected or "",
@@ -94,7 +96,7 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
     }
     (out / "results.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     with (out / "results.csv").open("w", newline="", encoding="utf-8") as f:
-        fields = ["id", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "completion_sha256", "latency_ms"]
+        fields = ["id", "category", "severity", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "completion_sha256", "latency_ms"]
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for row in rows:
@@ -109,6 +111,18 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
         "cases_with_forbidden_hits": sum(bool(row["forbidden_hits"]) for row in rows),
         "quality_gate": gate, "output": str(out),
     }
+    category_scores = {}
+    for category in sorted({row["category"] for row in rows}):
+        group = [row for row in rows if row["category"] == category]
+        group_checked = [row for row in group if row["expected_pass"] is not None]
+        category_scores[category] = {
+            "cases": len(group),
+            "expected_checks": len(group_checked),
+            "expected_pass_rate": sum(bool(row["expected_pass"]) for row in group_checked) / len(group_checked) if group_checked else None,
+            "cases_with_forbidden_hits": sum(bool(row["forbidden_hits"]) for row in group),
+            "mean_latency_ms": round(sum(row["latency_ms"] for row in group) / len(group), 3) if group else None,
+        }
+    summary["category_scores"] = category_scores
     summary["mean_latency_ms"] = round(sum(row["latency_ms"] for row in rows) / len(rows), 3) if rows else None
     report_path = render_report({"model_id": model_id, "cases": rows, "summary": summary}, out / "report.html")
     summary["html_report"] = report_path
