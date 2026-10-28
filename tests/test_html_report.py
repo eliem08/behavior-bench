@@ -26,3 +26,23 @@ def test_html_report_handles_empty_cases(tmp_path):
     content = open(path, encoding="utf-8").read()
     assert "Cases" in content
     assert ">0</div>" in content
+
+
+def test_html_report_escapes_dynamic_category_metrics(tmp_path):
+    payload = {
+        "model_id": "test",
+        "cases": [],
+        "summary": {"category_scores": {"formatting": {
+            "cases": "<b>7</b>",
+            "expected_pass_rate": None,
+            "cases_with_forbidden_hits": "<img src=x>",
+            "mean_latency_ms": "<script>bad</script>",
+        }}},
+    }
+    path = render_report(payload, tmp_path / "category.html")
+    content = open(path, encoding="utf-8").read()
+    assert "<b>7</b>" not in content
+    assert "&lt;b&gt;7&lt;/b&gt;" in content
+    assert "<img src=x>" not in content
+    assert "&lt;img src=x&gt;" in content
+    assert "<script>bad</script>" not in content
