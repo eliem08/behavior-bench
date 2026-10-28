@@ -76,7 +76,7 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
     out=Path(output); out.mkdir(parents=True,exist_ok=True)
     (out/"results.json").write_text(json.dumps({"model_id":model_id,"device":device,"cases":rows,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens},inputs={"case_file":Path(cases_path).read_text(encoding="utf-8")})},indent=2,ensure_ascii=False),encoding="utf-8")
     with (out/"results.csv").open("w",newline="",encoding="utf-8") as f:
-        fields=["id","prompt","completion","expected_substring","expected_pass","forbidden_hits","completion_sha256"]
+        fields=["id","prompt","completion","expected_substring","expected_pass","forbidden_hits","completion_sha256","input_tokens","completion_tokens","latency_ms"]
         w=csv.DictWriter(f,fieldnames=fields);w.writeheader()
         for r in rows:
             r2=dict(r);r2["forbidden_hits"]="; ".join(r["forbidden_hits"]);w.writerow(r2)
