@@ -1,0 +1,63 @@
+name: API evaluation example
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: OpenAI-compatible API root URL
+        required: true
+        type: string
+      model_id:
+        description: Model identifier at the provider
+        required: true
+        type: string
+      minimum_failing_severity:
+        description: Severity threshold for blocking this run
+        required: true
+        default: high
+        type: choice
+        options:
+          - low
+          - normal
+          - high
+          - critical
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate API key configuration
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "$LLM_API_KEY" ]; then
+            echo "Configure the LLM_API_KEY repository secret before running this workflow."
+            exit 1
+          fi
+      - name: Run evaluation suite
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          API_BASE_URL: ${{ inputs.base_url }}
+          MODEL_ID: ${{ inputs.model_id }}
+          MINIMUM_SEVERITY: ${{ inputs.minimum_failing_severity }}
+        run: |
+          python api_benchmark.py \
+            --base-url "$API_BASE_URL" \
+            --model-id "$MODEL_ID" \
+            --api-key-env LLM_API_KEY \
+            --cases examples/cases.jsonl \
+            --output outputs/api-benchmark \
+            --minimum-failing-severity "$MINIMUM_SEVERITY"
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-bench-report
+          path: outputs/api-benchmark/
+          if-no-files-found: warn
+          retention-days: 14
