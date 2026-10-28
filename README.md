@@ -21,7 +21,7 @@ Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, p
 
 ## Evaluate an OpenAI-compatible API
 
-Set your provider key in an environment variable (never commit it), then run:
+The API-only runner needs no PyTorch, Transformers, or GPU. Set your provider key in an environment variable (never commit it), then run:
 
     export OPENAI_API_KEY="..."
     python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --fail-on-regression
@@ -33,6 +33,10 @@ On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL 
     python compare_models.py --results outputs/baseline/results.json outputs/candidate/results.json --labels baseline candidate --fail-on-regression
 
 The comparison utility aligns results by case ID, identifies newly failing expected checks, missing candidate cases and new forbidden-phrase hits, and exports JSON/CSV plus a static HTML report. The first file is the baseline and the second is the candidate. With --fail-on-regression, the process exits non-zero when a regression is found, making it suitable for a CI gate. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
+
+## GitHub Actions integration
+
+See [examples/github-actions.yml](examples/github-actions.yml) for a template that runs the API evaluator on pull requests and uploads JSON/CSV/HTML artifacts. Copy it into the application repository, store the API key as the `LLM_API_KEY` secret, and configure `LLM_API_BASE_URL` and `LLM_MODEL_ID` as repository variables. The example assumes that repository contains `examples/cases.jsonl`.
 
 ## What the scores mean
 
