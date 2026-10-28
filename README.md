@@ -21,9 +21,9 @@ Exports JSON, CSV, a provenance manifest, and a quality-gate summary. Add --fail
 
 ## Compare two saved model runs
 
-    python compare_models.py --results outputs/model-a/results.json outputs/model-b/results.json --labels model-a model-b
+    python compare_models.py --results outputs/baseline/results.json outputs/candidate/results.json --labels baseline candidate --fail-on-regression
 
-The comparison utility aligns results by case ID, flags changed expected checks, and exports JSON/CSV. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
+The comparison utility aligns results by case ID, identifies newly failing expected checks and new forbidden-phrase hits, and exports JSON/CSV. The first file is the baseline and the second is the candidate. With --fail-on-regression, the process exits non-zero when a regression is found, making it suitable for a CI gate. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
 
 ## What the scores mean
 
