@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
-from benchmark import load_cases, assess_quality_gate
+from evaluation_core import load_cases, assess_quality_gate
 from provenance import build_manifest
 from html_report import render_report
 
