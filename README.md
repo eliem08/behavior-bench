@@ -29,6 +29,10 @@ The comparison utility aligns results by case ID, identifies newly failing expec
 
 Substring checks are simple regression signals, not semantic evaluation. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
 
+## Deployment and security
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for local setup and regression-gated runs, and [SECURITY.md](SECURITY.md) for deployment cautions and vulnerability reporting. The current dashboard is local-only; it is not yet a secured multi-user SaaS.
+
 ## License
 
 MIT.
