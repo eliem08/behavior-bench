@@ -18,15 +18,15 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 ## Roadmap
 
 ### Phase 1 — Useful regression suite
-- [ ] Add schema validation and a CLI exit code for configured failures.
+- [x] Add strict JSONL schema validation, unique case IDs, and an opt-in CLI exit code for failed checks.
 - [ ] Add semantic rubric hooks as optional pluggable evaluators; label model-graded scores separately.
 - [ ] Track latency, token counts, exceptions, and reproducibility metadata.
 - [x] Compare saved run artifacts by case ID and highlight changed outputs / expected-check changes.\n- [ ] Add a richer HTML diff report and category-level summaries.
 - [ ] Add fixtures for prompt injection, refusal, factuality, structured output, and tool-use behavior.
 
 ### Phase 2 — Team-ready testing
-- [ ] Model/API adapter interface with secrets only through environment variables.
-- [ ] GitHub Actions example that fails on configured regression thresholds.
+- [x] Add a hosted OpenAI-compatible API adapter with API keys read from environment variables.
+- [x] Add CLI gates for expected/forbidden phrase checks and baseline-vs-candidate regressions; add a CI example and richer thresholds next.
 - [ ] Dataset versioning, tags, owner, severity, and review workflow.
 - [ ] Bootstrap confidence intervals and per-category scorecards.
 - [ ] HTML report export and run history.
