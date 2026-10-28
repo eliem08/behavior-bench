@@ -14,6 +14,8 @@ provider = st.selectbox("Provider", ["Local Hugging Face", "OpenAI-compatible AP
 model = st.text_input("Model ID", "distilgpt2" if provider == "Local Hugging Face" else "")
 cases = st.text_input("JSONL case file", "examples/cases.jsonl")
 tokens = st.slider("Maximum new tokens", 16, 256, 96, step=16)
+severity_choice = st.selectbox("Fail on severity", ["Any finding", "Low or above", "Normal or above", "High or above", "Critical only"], index=0)
+minimum_severity = {"Any finding": None, "Low or above": "low", "Normal or above": "normal", "High or above": "high", "Critical only": "critical"}[severity_choice]
 if provider == "Local Hugging Face":
     device = st.selectbox("Device", ["auto", "cuda", "mps", "cpu"])
 else:
@@ -25,14 +27,14 @@ if st.button("Run benchmark", type="primary"):
     try:
         with st.spinner("Running test cases…"):
             if provider == "Local Hugging Face":
-                summary = run_benchmark(model, cases, max_new_tokens=tokens, device=device)
+                summary = run_benchmark(model, cases, max_new_tokens=tokens, device=device, minimum_failing_severity=minimum_severity)
             else:
                 api_key = os.environ.get(key_env)
                 if not api_key:
                     raise ValueError(f"Set {key_env} in the environment where Streamlit is running.")
                 if not base_url.strip() or not model.strip():
                     raise ValueError("Enter the API base URL and model ID.")
-                summary = run_api_benchmark(model, cases, base_url, api_key, max_new_tokens=tokens)
+                summary = run_api_benchmark(model, cases, base_url, api_key, max_new_tokens=tokens, minimum_failing_severity=minimum_severity)
         st.metric("Cases", summary["total"])
         rate = summary["expected_pass_rate"]
         st.metric("Expected substring pass rate", "n/a" if rate is None else f"{rate:.1%}")
