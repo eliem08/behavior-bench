@@ -71,7 +71,8 @@ def main():
         p.error("Model labels must be unique")
     rows = compare_payloads(loaded)
     out = Path(a.output); out.mkdir(parents=True, exist_ok=True)
-    payload = {"inputs": a.results, "models": labels, "baseline": loaded[0][0], "candidate": loaded[1][0] if len(loaded) > 1 else None, "regressions": [row for row in rows if row["regression_detected"]], "cases": rows}
+    regressions = [row for row in rows if row["regression_detected"]]
+    payload = {"inputs": a.results, "models": labels, "baseline": loaded[0][0], "candidate": loaded[1][0] if len(loaded) > 1 else None, "regressions": regressions, "summary": {"quality_gate": {"passed": not regressions, "failure_count": len(regressions)}}, "cases": rows}
     (out / "comparison.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     report_rows = []
     candidate_name = payload["candidate"]
