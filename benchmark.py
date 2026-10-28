@@ -58,6 +58,10 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
     summary["mean_latency_ms"] = round(sum(r["latency_ms"] for r in rows) / len(rows), 3) if rows else None
     summary["total_input_tokens"] = sum(r["input_tokens"] for r in rows)
     summary["total_completion_tokens"] = sum(r["completion_tokens"] for r in rows)
+    result_payload = json.loads((out / "results.json").read_text(encoding="utf-8"))
+    result_payload["quality_gate"] = gate
+    result_payload["summary"] = summary
+    (out / "results.json").write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
     report_path = render_report({"model_id": model_id, "cases": rows, "summary": summary}, out / "report.html")
     summary["html_report"] = report_path
     (out/"summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")
