@@ -25,7 +25,7 @@ jobs:
       - name: Compile application and dashboard modules
         run: python -m py_compile runtime.py app.py main.py dashboard.py
       - name: Compile application and reporting modules
-        run: python -m py_compile benchmark.py api_benchmark.py compare_models.py html_report.py provenance.py
+        run: python -m py_compile benchmark.py api_benchmark.py compare_models.py evaluation_core.py html_report.py provenance.py
       - name: Compile tests
         run: python -m py_compile tests/*.py
       - name: Run tests
