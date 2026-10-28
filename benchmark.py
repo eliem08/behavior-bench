@@ -32,6 +32,11 @@ def load_cases(path):
         case.setdefault("forbidden_substrings", [])
         if not isinstance(case["forbidden_substrings"], list) or not all(isinstance(s, str) for s in case["forbidden_substrings"]):
             raise ValueError(f"Line {line_number}: forbidden_substrings must be a list of strings")
+        case.setdefault("category", "uncategorized")
+        case.setdefault("severity", "normal")
+        for field in ("category", "severity"):
+            if not isinstance(case[field], str) or not case[field].strip():
+                raise ValueError(f"Line {line_number}: {field} must be a non-empty string")
         cases.append(case)
     if not cases:
         raise ValueError("Case file contains no test cases")
@@ -68,7 +73,7 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
         completion=tokenizer.decode(generated[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
         expected=case.get("expected_substring")
         forbidden=case.get("forbidden_substrings", [])
-        rows.append({"id":case["id"],"prompt":case["prompt"],"completion":completion,"expected_substring":expected or "",
+        rows.append({"id":case["id"],"category":case["category"],"severity":case["severity"],"prompt":case["prompt"],"completion":completion,"expected_substring":expected or "",
           "expected_pass": None if not expected else expected.casefold() in completion.casefold(),
           "forbidden_hits":[s for s in forbidden if s.casefold() in completion.casefold()],
           "completion_sha256":hashlib.sha256(completion.encode()).hexdigest(),
@@ -76,13 +81,25 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
     out=Path(output); out.mkdir(parents=True,exist_ok=True)
     (out/"results.json").write_text(json.dumps({"model_id":model_id,"device":device,"cases":rows,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens},inputs={"case_file":Path(cases_path).read_text(encoding="utf-8")})},indent=2,ensure_ascii=False),encoding="utf-8")
     with (out/"results.csv").open("w",newline="",encoding="utf-8") as f:
-        fields=["id","prompt","completion","expected_substring","expected_pass","forbidden_hits","completion_sha256","input_tokens","completion_tokens","latency_ms"]
+        fields=["id","category","severity","prompt","completion","expected_substring","expected_pass","forbidden_hits","completion_sha256","input_tokens","completion_tokens","latency_ms"]
         w=csv.DictWriter(f,fieldnames=fields);w.writeheader()
         for r in rows:
             r2=dict(r);r2["forbidden_hits"]="; ".join(r["forbidden_hits"]);w.writerow(r2)
     checked=[r for r in rows if r["expected_pass"] is not None]
     gate = assess_quality_gate(rows)
     summary={"model_id":model_id,"device":device,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens}),"total":len(rows),"expected_checks":len(checked),"expected_pass_rate":sum(bool(r["expected_pass"]) for r in checked)/len(checked) if checked else None,"cases_with_forbidden_hits":sum(bool(r["forbidden_hits"]) for r in rows),"quality_gate":gate,"output":str(out)}
+    category_scores = {}
+    for category in sorted({r["category"] for r in rows}):
+        group = [r for r in rows if r["category"] == category]
+        group_checked = [r for r in group if r["expected_pass"] is not None]
+        category_scores[category] = {
+            "cases": len(group),
+            "expected_checks": len(group_checked),
+            "expected_pass_rate": sum(bool(r["expected_pass"]) for r in group_checked) / len(group_checked) if group_checked else None,
+            "cases_with_forbidden_hits": sum(bool(r["forbidden_hits"]) for r in group),
+            "mean_latency_ms": round(sum(r["latency_ms"] for r in group) / len(group), 3) if group else None,
+        }
+    summary["category_scores"] = category_scores
     summary["mean_latency_ms"] = round(sum(r["latency_ms"] for r in rows) / len(rows), 3) if rows else None
     summary["total_input_tokens"] = sum(r["input_tokens"] for r in rows)
     summary["total_completion_tokens"] = sum(r["completion_tokens"] for r in rows)
