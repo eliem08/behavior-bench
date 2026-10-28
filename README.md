@@ -19,6 +19,15 @@ python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on
 
 Exports JSON, CSV, a provenance manifest, and a quality-gate summary. Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. JSONL cases require a prompt and may include a unique ID, expected substring, and forbidden substrings. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
 
+## Evaluate an OpenAI-compatible API
+
+Set your provider key in an environment variable (never commit it), then run:
+
+    export OPENAI_API_KEY="..."
+    python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --fail-on-regression
+
+On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL and model with values from your provider. The adapter expects a POST /chat/completions response. API keys are not written to result files. Check your provider's data-retention terms before sending prompts.
+
 ## Compare two saved model runs
 
     python compare_models.py --results outputs/baseline/results.json outputs/candidate/results.json --labels baseline candidate --fail-on-regression
