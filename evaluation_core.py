@@ -29,6 +29,9 @@ def load_cases(path):
         for field in ("category", "severity"):
             if not isinstance(case[field], str) or not case[field].strip():
                 raise ValueError(f"Line {line_number}: {field} must be a non-empty string")
+        if case["severity"].casefold() not in SEVERITY_ORDER:
+            raise ValueError(f"Line {line_number}: severity must be low, normal, high, or critical")
+        case["severity"] = case["severity"].casefold()
         cases.append(case)
     if not cases:
         raise ValueError("Case file contains no test cases")
@@ -38,13 +41,38 @@ def load_cases(path):
     return cases
 
 
-def assess_quality_gate(rows):
-    """Return transparent regression findings; substring checks are not semantic evaluation."""
-    failures = []
+SEVERITY_ORDER = {"low": 0, "normal": 1, "high": 2, "critical": 3}
+
+
+def assess_quality_gate(rows, minimum_failing_severity=None):
+    """Return transparent regression findings; substring checks are not semantic evaluation.
+
+    When a minimum severity is supplied, only findings at that severity or above
+    fail the gate. All findings remain visible in the returned diagnostic list.
+    """
+    if minimum_failing_severity is not None and minimum_failing_severity not in SEVERITY_ORDER:
+        raise ValueError("minimum_failing_severity must be low, normal, high, or critical")
+    findings = []
     for row in rows:
-        if row["expected_pass"] is False:
-            failures.append({"case_id": row["id"], "reason": "expected_substring_missing"})
-        if row["forbidden_hits"]:
-            failures.append({"case_id": row["id"], "reason": "forbidden_substring_found",
+        metadata = {
+            "case_id": row["id"],
+            "category": row.get("category", "uncategorized"),
+            "severity": row.get("severity", "normal"),
+        }
+        if row.get("expected_pass") is False:
+            findings.append({**metadata, "reason": "expected_substring_missing"})
+        if row.get("forbidden_hits"):
+            findings.append({**metadata, "reason": "forbidden_substring_found",
                              "matches": row["forbidden_hits"]})
-    return {"passed": not failures, "failure_count": len(failures), "failures": failures}
+    failures = findings
+    if minimum_failing_severity is not None:
+        threshold = SEVERITY_ORDER[minimum_failing_severity]
+        failures = [item for item in findings if SEVERITY_ORDER.get(item["severity"], 1) >= threshold]
+    return {
+        "passed": not failures,
+        "failure_count": len(failures),
+        "total_finding_count": len(findings),
+        "minimum_failing_severity": minimum_failing_severity,
+        "failures": failures,
+        "all_findings": findings,
+    }
