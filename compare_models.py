@@ -16,6 +16,8 @@ def compare_payloads(named_payloads):
     for name, payload in named_payloads:
         for row in payload.get("cases", []):
             indexed.setdefault(row["id"], {})[name] = row
+    baseline_name = named_payloads[0][0] if named_payloads else None
+    candidate_name = named_payloads[1][0] if len(named_payloads) > 1 else None
     comparisons = []
     for case_id, by_model in sorted(indexed.items()):
         names = list(by_model)
@@ -25,23 +27,27 @@ def compare_payloads(named_payloads):
             item[f"{name}_completion"] = row.get("completion", "")
             item[f"{name}_expected_pass"] = row.get("expected_pass")
             item[f"{name}_forbidden_hits"] = row.get("forbidden_hits", [])
-        if len(names) >= 2:
-            baseline_name, candidate_name = names[:2]
-            baseline, candidate = by_model[baseline_name], by_model[candidate_name]
-            item["outputs_identical"] = baseline.get("completion") == candidate.get("completion")
-            item["expected_pass_changed"] = baseline.get("expected_pass") != candidate.get("expected_pass")
-            reasons = []
-            if baseline.get("expected_pass") is True and candidate.get("expected_pass") is False:
-                reasons.append("previously_passing_expected_check_now_fails")
-            new_forbidden = sorted(set(candidate.get("forbidden_hits", [])) - set(baseline.get("forbidden_hits", [])))
-            if new_forbidden:
-                reasons.append("new_forbidden_substring_hits")
-            item["new_forbidden_hits"] = new_forbidden
-            item["regression_reasons"] = reasons
-            item["regression_detected"] = bool(reasons)
+        reasons = []
+        if baseline_name and candidate_name and baseline_name in by_model:
+            if candidate_name not in by_model:
+                item["outputs_identical"] = False
+                item["expected_pass_changed"] = False
+                item["new_forbidden_hits"] = []
+                reasons.append("case_missing_from_candidate")
+            else:
+                baseline, candidate = by_model[baseline_name], by_model[candidate_name]
+                item["outputs_identical"] = baseline.get("completion") == candidate.get("completion")
+                item["expected_pass_changed"] = baseline.get("expected_pass") != candidate.get("expected_pass")
+                if baseline.get("expected_pass") is True and candidate.get("expected_pass") is False:
+                    reasons.append("previously_passing_expected_check_now_fails")
+                new_forbidden = sorted(set(candidate.get("forbidden_hits", [])) - set(baseline.get("forbidden_hits", [])))
+                if new_forbidden:
+                    reasons.append("new_forbidden_substring_hits")
+                item["new_forbidden_hits"] = new_forbidden
         else:
-            item["regression_reasons"] = []
-            item["regression_detected"] = False
+            item["new_forbidden_hits"] = []
+        item["regression_reasons"] = reasons
+        item["regression_detected"] = bool(reasons)
         comparisons.append(item)
     return comparisons
 
