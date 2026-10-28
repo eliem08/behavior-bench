@@ -21,7 +21,8 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 - [x] Add strict JSONL schema validation, unique case IDs, and an opt-in CLI exit code for failed checks.
 - [ ] Add semantic rubric hooks as optional pluggable evaluators; label model-graded scores separately.
 - [ ] Track latency, token counts, exceptions, and reproducibility metadata.
-- [x] Compare saved run artifacts by case ID and highlight changed outputs / expected-check changes.\n- [ ] Add a richer HTML diff report and category-level summaries.
+- [x] Compare saved run artifacts by case ID and highlight changed outputs / expected-check changes.
+- [ ] Add a richer HTML diff report and category-level summaries.
 - [ ] Add fixtures for prompt injection, refusal, factuality, structured output, and tool-use behavior.
 
 ### Phase 2 — Team-ready testing
