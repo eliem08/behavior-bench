@@ -17,7 +17,7 @@ Run the sample case suite, inspect completions, and review basic pass-rate and f
     python benchmark.py --model-id distilgpt2 --device cuda --max-new-tokens 80
 python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on-regression
 
-Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. JSONL cases require a prompt and may include a unique ID, expected substring, and forbidden substrings. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
+Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. JSONL cases require a prompt and may include a unique ID, category, severity, expected substring, and forbidden substrings. Outputs include per-case latency; local inference also records input/output token counts. A self-contained HTML report summarizes category scorecards and results. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
 
 ## Evaluate an OpenAI-compatible API
 
