@@ -44,6 +44,13 @@ if st.button("Run benchmark", type="primary"):
             st.error(f"Quality gate found {gate['failure_count']} regression signal(s)")
             st.dataframe(pd.DataFrame(gate["failures"]), use_container_width=True)
         st.caption("Substring checks are transparent regression signals, not semantic quality or safety certification.")
+        if summary.get("category_scores"):
+            st.subheader("Category scorecards")
+            category_frame = pd.DataFrame.from_dict(summary["category_scores"], orient="index").rename_axis("category").reset_index()
+            st.dataframe(category_frame, use_container_width=True)
+        st.metric("Mean latency (ms)", "n/a" if summary.get("mean_latency_ms") is None else summary["mean_latency_ms"])
+        if summary.get("total_completion_tokens") is not None:
+            st.metric("Completion tokens", summary["total_completion_tokens"])
         payload = json.loads((Path(summary["output"]) / "results.json").read_text(encoding="utf-8"))
         st.dataframe(pd.json_normalize(payload["cases"]), use_container_width=True)
         st.download_button("Download JSON results", json.dumps(payload, indent=2), file_name="benchmark-results.json")
