@@ -60,7 +60,7 @@ def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeo
     return text
 
 
-def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/api-benchmark", max_new_tokens=96):
+def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/api-benchmark", max_new_tokens=96, minimum_failing_severity=None):
     cases = load_cases(cases_path)
     rows = []
     for case in cases:
@@ -83,10 +83,10 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
         })
     out = Path(output)
     out.mkdir(parents=True, exist_ok=True)
-    gate = assess_quality_gate(rows)
+    gate = assess_quality_gate(rows, minimum_failing_severity)
     manifest = build_manifest(
         "behavior-bench", model_id=model_id, device="api",
-        config={"max_new_tokens": max_new_tokens, "base_url": base_url},
+        config={"max_new_tokens": max_new_tokens, "base_url": base_url, "minimum_failing_severity": minimum_failing_severity},
         inputs={"case_file": Path(cases_path).read_text(encoding="utf-8")},
     )
     payload = {
@@ -139,13 +139,14 @@ def main():
     parser.add_argument("--output", default="outputs/api-benchmark")
     parser.add_argument("--max-new-tokens", type=int, default=96)
     parser.add_argument("--fail-on-regression", action="store_true")
+    parser.add_argument("--minimum-failing-severity", choices=["low", "normal", "high", "critical"], default=None, help="Only fail on findings at this severity or higher; implies --fail-on-regression")
     args = parser.parse_args()
     api_key = os.environ.get(args.api_key_env)
     if not api_key:
         parser.error(f"Set the API key in environment variable {args.api_key_env}")
-    summary = run_api_benchmark(args.model_id, args.cases, args.base_url, api_key, args.output, args.max_new_tokens)
+    summary = run_api_benchmark(args.model_id, args.cases, args.base_url, api_key, args.output, args.max_new_tokens, args.minimum_failing_severity)
     print(json.dumps(summary, indent=2))
-    if args.fail_on_regression and not summary["quality_gate"]["passed"]:
+    if (args.fail_on_regression or args.minimum_failing_severity is not None) and not summary["quality_gate"]["passed"]:
         sys.exit(1)
 
 
