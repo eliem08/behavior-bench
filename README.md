@@ -18,6 +18,12 @@ Run the sample case suite, inspect completions, and review basic pass-rate and f
 
 Exports JSON, CSV, and a summary. JSONL cases require a prompt and may include an ID, expected substring, and forbidden substrings.
 
+## Compare two saved model runs
+
+    python compare_models.py --results outputs/model-a/results.json outputs/model-b/results.json --labels model-a model-b
+
+The comparison utility aligns results by case ID, flags changed expected checks, and exports JSON/CSV. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
+
 ## What the scores mean
 
 Substring checks are simple regression signals, not semantic evaluation. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
