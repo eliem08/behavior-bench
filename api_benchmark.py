@@ -14,14 +14,20 @@ from pathlib import Path
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 
 from benchmark import load_cases, assess_quality_gate
 from provenance import build_manifest
 
 
 def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90):
-    if not base_url.startswith(("https://", "http://")):
-        raise ValueError("base_url must start with http:// or https://")
+    parsed = urlsplit(base_url)
+    if parsed.scheme not in ("https", "http") or not parsed.netloc:
+        raise ValueError("base_url must be an absolute http:// or https:// URL")
+    if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ValueError("base_url must not contain credentials, query parameters, or a fragment")
+    if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+        raise ValueError("Use HTTPS for remote API endpoints; plain HTTP is allowed only for localhost")
     url = base_url.rstrip("/") + "/chat/completions"
     payload = {
         "model": model_id,
