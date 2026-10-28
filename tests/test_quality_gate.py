@@ -46,3 +46,14 @@ def test_load_cases_rejects_invalid_forbidden_substrings(tmp_path):
     p.write_text(json.dumps({"prompt": "hello", "forbidden_substrings": "not-a-list"}), encoding="utf-8")
     with pytest.raises(ValueError, match="list of strings"):
         load_cases(p)
+
+
+def test_load_cases_defaults_and_validates_category_and_severity(tmp_path):
+    p = tmp_path / "cases.jsonl"
+    p.write_text(json.dumps({"prompt": "hello", "category": "factuality", "severity": "high"}), encoding="utf-8")
+    cases = load_cases(p)
+    assert cases[0]["category"] == "factuality"
+    assert cases[0]["severity"] == "high"
+    p.write_text(json.dumps({"prompt": "hello", "severity": ""}), encoding="utf-8")
+    with pytest.raises(ValueError, match="severity"):
+        load_cases(p)
