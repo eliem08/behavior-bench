@@ -2,44 +2,28 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eliem08/behavior-bench/blob/main/colab.ipynb)
 
+A lightweight prompt-regression harness for comparing a model against explicit expected and forbidden text checks.
 
-Run prompt-based regression checks and save reproducible baseline outputs for later comparisons.
+## Run a benchmark
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-GPU%20or%20CPU-ee4c2c)
+    pip install -r requirements.txt
+    python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl
+
+The runner uses deterministic greedy decoding and exports outputs/benchmark/results.json, results.csv, and summary.json. Each JSONL case needs a prompt; optionally provide id, expected_substring, and forbidden_substrings.
+
+    python benchmark.py --model-id distilgpt2 --device cuda --max-new-tokens 80
+
+The device auto-option selects CUDA, Apple MPS, or CPU. Open colab.ipynb in Colab for a notebook workflow.
+
+## What the scores mean
+
+Substring checks are simple regression signals, not semantic evaluation. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
 
 ## Quickstart
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python main.py
-```
+    python main.py
 
-Default run uses a tiny randomly initialized model to validate the software path and does not claim useful model behavior.
-
-## Use a pretrained model
-
-Set `NEURONLAB_MODEL` or pass `--real-model --model-id MODEL_ID`. For example, select a small causal language model you are licensed to use:
-
-```bash
-python main.py --real-model --model-id distilgpt2 --text "The sky is"
-```
-
-Model weights take disk, RAM, and often VRAM. The runtime detects CUDA, Apple MPS, or CPU automatically. Install the appropriate PyTorch build for your hardware if needed.
-
-## Google Colab
-
-Open `colab.ipynb` in Colab, select **Runtime → Change runtime type → T4 GPU** when available, then run all cells. The same notebook also runs on CPU, but inference is slower. Free GPU availability and quotas vary.
-
-## Reproducibility and limitations
-
-- Save output artifacts under `outputs/`. Repeat experiments on held-out inputs before making claims.
-- Random demo weights only exercise code paths. They are not suitable for quality, safety, or interpretability conclusions.
-- Do not treat lexical heuristics or activation patterns as reliable evidence of intent or deception.
-- Activation steering may harm other capabilities; record baselines and random controls.
-- Do not expose model inference to the public internet without authentication and resource controls.
+The original demo uses random weights to check the pipeline; use a pretrained model for real prompt evaluation.
 
 ## License
 
