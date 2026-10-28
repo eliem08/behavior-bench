@@ -29,6 +29,10 @@ The API-only runner needs no PyTorch, Transformers, or GPU. Set your provider ke
 
 On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL and model with values from your provider. The adapter expects a POST /chat/completions response. API keys are not written to result files. Check your provider's data-retention terms before sending prompts.
 
+## Optional model-graded rubric
+
+For a second opinion on saved outputs, see [RUBRIC_EVALUATION.md](RUBRIC_EVALUATION.md) and run `rubric_eval.py`. It scores correctness, relevance, instruction-following, and safety with a separate judge model. These are heuristic scores, not ground truth; review the rationale and protect the resulting artifacts.
+
 ## Compare two saved model runs
 
     python compare_models.py --results outputs/baseline/results.json outputs/candidate/results.json --labels baseline candidate --fail-on-regression
