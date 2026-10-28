@@ -9,6 +9,7 @@ import json
 import csv
 import sys
 from pathlib import Path
+from html_report import render_report
 
 def compare_payloads(named_payloads):
     """Compare already-computed results keyed by case ID."""
@@ -65,10 +66,22 @@ def main():
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         label = a.labels[i] if a.labels else payload.get("model_id", Path(path).parent.name)
         loaded.append((label, payload))
+    labels = [name for name, _ in loaded]
+    if len(labels) != len(set(labels)):
+        p.error("Model labels must be unique")
     rows = compare_payloads(loaded)
     out = Path(a.output); out.mkdir(parents=True, exist_ok=True)
-    payload = {"inputs": a.results, "models": [n for n, _ in loaded], "baseline": loaded[0][0], "candidate": loaded[1][0] if len(loaded) > 1 else None, "regressions": [row for row in rows if row["regression_detected"]], "cases": rows}
+    payload = {"inputs": a.results, "models": labels, "baseline": loaded[0][0], "candidate": loaded[1][0] if len(loaded) > 1 else None, "regressions": [row for row in rows if row["regression_detected"]], "cases": rows}
     (out / "comparison.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    report_rows = []
+    candidate_name = payload["candidate"]
+    for row in rows:
+        item = dict(row)
+        item["completion"] = row.get(f"{candidate_name}_completion", "") if candidate_name else ""
+        item["forbidden_hits"] = row.get(f"{candidate_name}_forbidden_hits", row.get("new_forbidden_hits", []))
+        report_rows.append(item)
+    payload["cases"] = report_rows
+    render_report(payload, out / "report.html")
     columns = sorted({key for row in rows for key in row if not isinstance(row[key], (list, dict))})
     with (out / "comparison.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=columns); writer.writeheader()
