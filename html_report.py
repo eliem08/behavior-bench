@@ -53,7 +53,7 @@ body{max-width:1200px;margin:2rem auto;padding:0 1rem;line-height:1.5}
 h1{margin-bottom:.25rem}.muted{opacity:.72}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin:1.5rem 0}
 .metric{border:1px solid #8886;border-radius:12px;padding:1rem}.value{font-size:1.5rem;font-weight:700}
 .table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:750px}th,td{text-align:left;padding:.7rem;border-bottom:1px solid #8885;vertical-align:top}
-td:nth-child(3){white-space:pre-wrap;overflow-wrap:anywhere;max-width:560px}
+td:nth-child(5){white-space:pre-wrap;overflow-wrap:anywhere;max-width:560px}
 footer{margin-top:2rem;font-size:.9rem;opacity:.75}
 </style></head><body>
 <h1>Behavior Bench report</h1><p class="muted">""" + title + """</p>
