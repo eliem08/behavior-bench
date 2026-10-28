@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import json
 import csv
+import sys
 from pathlib import Path
 
 def compare_payloads(named_payloads):
@@ -17,7 +18,7 @@ def compare_payloads(named_payloads):
             indexed.setdefault(row["id"], {})[name] = row
     comparisons = []
     for case_id, by_model in sorted(indexed.items()):
-        names = sorted(by_model)
+        names = list(by_model)
         item = {"id": case_id, "models_present": names}
         for name in names:
             row = by_model[name]
@@ -25,9 +26,22 @@ def compare_payloads(named_payloads):
             item[f"{name}_expected_pass"] = row.get("expected_pass")
             item[f"{name}_forbidden_hits"] = row.get("forbidden_hits", [])
         if len(names) >= 2:
-            a, b = names[:2]
-            item["outputs_identical"] = by_model[a].get("completion") == by_model[b].get("completion")
-            item["expected_pass_changed"] = by_model[a].get("expected_pass") != by_model[b].get("expected_pass")
+            baseline_name, candidate_name = names[:2]
+            baseline, candidate = by_model[baseline_name], by_model[candidate_name]
+            item["outputs_identical"] = baseline.get("completion") == candidate.get("completion")
+            item["expected_pass_changed"] = baseline.get("expected_pass") != candidate.get("expected_pass")
+            reasons = []
+            if baseline.get("expected_pass") is True and candidate.get("expected_pass") is False:
+                reasons.append("previously_passing_expected_check_now_fails")
+            new_forbidden = sorted(set(candidate.get("forbidden_hits", [])) - set(baseline.get("forbidden_hits", [])))
+            if new_forbidden:
+                reasons.append("new_forbidden_substring_hits")
+            item["new_forbidden_hits"] = new_forbidden
+            item["regression_reasons"] = reasons
+            item["regression_detected"] = bool(reasons)
+        else:
+            item["regression_reasons"] = []
+            item["regression_detected"] = False
         comparisons.append(item)
     return comparisons
 
@@ -36,6 +50,7 @@ def main():
     p.add_argument("--results", nargs="+", required=True, help="Paths to results.json; use --labels to name each")
     p.add_argument("--labels", nargs="*", default=None)
     p.add_argument("--output", default="outputs/model-comparison")
+    p.add_argument("--fail-on-regression", action="store_true", help="Exit with status 1 if candidate regresses against baseline; first input is baseline, second is candidate")
     a = p.parse_args()
     if a.labels and len(a.labels) != len(a.results):
         p.error("--labels must have the same number of values as --results")
@@ -46,13 +61,17 @@ def main():
         loaded.append((label, payload))
     rows = compare_payloads(loaded)
     out = Path(a.output); out.mkdir(parents=True, exist_ok=True)
-    (out / "comparison.json").write_text(json.dumps({"inputs": a.results, "models": [n for n, _ in loaded], "cases": rows}, indent=2, ensure_ascii=False), encoding="utf-8")
+    payload = {"inputs": a.results, "models": [n for n, _ in loaded], "baseline": loaded[0][0], "candidate": loaded[1][0] if len(loaded) > 1 else None, "regressions": [row for row in rows if row["regression_detected"]], "cases": rows}
+    (out / "comparison.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     columns = sorted({key for row in rows for key in row if not isinstance(row[key], (list, dict))})
     with (out / "comparison.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=columns); writer.writeheader()
         for row in rows:
             writer.writerow({k: row.get(k) for k in columns})
-    print(json.dumps({"models": [n for n, _ in loaded], "cases_compared": len(rows), "output": str(out)}, indent=2))
+    result = {"models": [n for n, _ in loaded], "cases_compared": len(rows), "regression_count": len(payload["regressions"]), "output": str(out)}
+    print(json.dumps(result, indent=2))
+    if a.fail_on_regression and result["regression_count"]:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
