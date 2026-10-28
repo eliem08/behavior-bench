@@ -47,6 +47,9 @@ if st.button("Run benchmark", type="primary"):
         payload = json.loads((Path(summary["output"]) / "results.json").read_text(encoding="utf-8"))
         st.dataframe(pd.json_normalize(payload["cases"]), use_container_width=True)
         st.download_button("Download JSON results", json.dumps(payload, indent=2), file_name="benchmark-results.json")
+        report_file = Path(summary["output"]) / "report.html"
+        if report_file.exists():
+            st.download_button("Download HTML report", report_file.read_bytes(), file_name="behavior-bench-report.html", mime="text/html")
     except Exception as exc:
         st.error(f"Benchmark failed: {exc}")
         st.info("Check the case-file path, model access, available memory, and selected device.")
