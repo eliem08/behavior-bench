@@ -23,6 +23,9 @@ def compare_payloads(named_payloads):
     for case_id, by_model in sorted(indexed.items()):
         names = list(by_model)
         item = {"id": case_id, "models_present": names}
+        metadata_source = by_model.get(baseline_name) or next(iter(by_model.values()))
+        item["category"] = metadata_source.get("category", "uncategorized")
+        item["severity"] = metadata_source.get("severity", "normal")
         for name in names:
             row = by_model[name]
             item[f"{name}_completion"] = row.get("completion", "")
