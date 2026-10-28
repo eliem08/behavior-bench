@@ -39,6 +39,10 @@ The comparison utility aligns results by case ID, identifies newly failing expec
 
 See [examples/github-actions.yml](examples/github-actions.yml) for a template that runs the API evaluator on pull requests and uploads JSON/CSV/HTML artifacts. Copy it into the application repository, store the API key as the `LLM_API_KEY` secret, and configure `LLM_API_BASE_URL` and `LLM_MODEL_ID` as repository variables. The example assumes that repository contains `examples/cases.jsonl`.
 
+## Case format
+
+See [CASE_FORMAT.md](CASE_FORMAT.md) for the JSONL schema, category/severity conventions, and quality-gate behavior.
+
 ## What the scores mean
 
 Substring checks are simple regression signals, not semantic evaluation. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
