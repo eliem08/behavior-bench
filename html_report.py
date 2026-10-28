@@ -21,10 +21,10 @@ def render_report(payload, output_path):
     category_rows = []
     for category, metrics in summary.get("category_scores", {}).items():
         rate = metrics.get("expected_pass_rate")
-        category_rows.append("<tr><td>" + html.escape(str(category)) + "</td><td>" + str(metrics.get("cases", 0)) +
+        category_rows.append("<tr><td>" + html.escape(str(category)) + "</td><td>" + esc(metrics.get("cases", 0)) +
             "</td><td>" + ("n/a" if rate is None else f"{rate:.1%}") + "</td><td>" +
-            str(metrics.get("cases_with_forbidden_hits", 0)) + "</td><td>" +
-            ("n/a" if metrics.get("mean_latency_ms") is None else str(metrics["mean_latency_ms"]) + " ms") + "</td></tr>")
+            esc(metrics.get("cases_with_forbidden_hits", 0)) + "</td><td>" +
+            ("n/a" if metrics.get("mean_latency_ms") is None else esc(str(metrics["mean_latency_ms"]) + " ms")) + "</td></tr>")
     rows_html = []
     for row in cases:
         status = "No expected check"
