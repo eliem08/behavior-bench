@@ -16,15 +16,16 @@ Run the sample case suite, inspect completions, and review basic pass-rate and f
     python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl
     python benchmark.py --model-id distilgpt2 --device cuda --max-new-tokens 80
 python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on-regression
+python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --minimum-failing-severity high
 
-Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. JSONL cases require a prompt and may include a unique ID, category, severity, expected substring, and forbidden substrings. Outputs include per-case latency; local inference also records input/output token counts. A self-contained HTML report summarizes category scorecards and results. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
+Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. The optional --minimum-failing-severity flag accepts low, normal, high, or critical and only blocks at that severity or above; lower-severity findings remain visible in the report. JSONL cases require a prompt and may include a unique ID, category, severity, expected substring, and forbidden substrings. Outputs include per-case latency; local inference also records input/output token counts. A self-contained HTML report summarizes category scorecards and results. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
 
 ## Evaluate an OpenAI-compatible API
 
 The API-only runner needs no PyTorch, Transformers, or GPU. Set your provider key in an environment variable (never commit it), then run:
 
     export OPENAI_API_KEY="..."
-    python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --fail-on-regression
+    python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --minimum-failing-severity high
 
 On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL and model with values from your provider. The adapter expects a POST /chat/completions response. API keys are not written to result files. Check your provider's data-retention terms before sending prompts.
 
