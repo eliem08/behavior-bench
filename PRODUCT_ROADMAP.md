@@ -29,7 +29,7 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 - [x] Add a hosted OpenAI-compatible API adapter with API keys read from environment variables.
 - [x] Add CLI gates for expected/forbidden phrase checks and baseline-vs-candidate regressions.
 - [ ] Add a GitHub Actions example that invokes the regression gate.
-- [ ] Dataset versioning, tags, owner, severity, and review workflow.
+- [ ] Dataset versioning, ownership, and review workflow; category/severity metadata and severity-aware gates are implemented.
 - [ ] Bootstrap confidence intervals and per-category scorecards.
 - [x] Export HTML reports for model and API runs; persistent run history remains open.
 
