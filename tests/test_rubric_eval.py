@@ -41,7 +41,7 @@ def test_rubric_run_writes_scores_and_marks_low_score_cases(tmp_path, monkeypatc
     out = tmp_path / "rubric"
     summary = rubric_eval.run_rubric_evaluation(
         str(source), "https://judge.example.test/v1", "judge-model", "test-key",
-        output=str(out), minimum_average_score=4.0,
+        output=str(out), minimum_average_score=4.1,
     )
     assert summary["cases_scored"] == 1
     assert summary["passed_threshold"] is False
