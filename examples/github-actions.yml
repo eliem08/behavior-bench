@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           git clone --depth 1 https://github.com/eliem08/behavior-bench.git .behavior-bench
-          python -m pip install -r .behavior-bench/requirements.txt
+          python -m pip install -r .behavior-bench/requirements-api.txt
       - name: Run evaluation gate
         run: |
           python .behavior-bench/api_benchmark.py --base-url "$LLM_API_BASE_URL" --model-id "$LLM_MODEL_ID" --api-key-env LLM_API_KEY --cases examples/cases.jsonl --output outputs/behavior-bench --fail-on-regression
