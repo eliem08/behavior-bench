@@ -1,0 +1,38 @@
+# Example integration for a repository that stores its own cases in examples/cases.jsonl.
+# Copy this file to .github/workflows/behavior-bench.yml in the application repository.
+name: LLM regression gate
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "prompts/**"
+      - "evals/**"
+      - "examples/cases.jsonl"
+      - ".github/workflows/behavior-bench.yml"
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_API_BASE_URL: ${{ vars.LLM_API_BASE_URL }}
+      LLM_MODEL_ID: ${{ vars.LLM_MODEL_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check required configuration
+        run: |
+          test -n "$LLM_API_KEY"
+          test -n "$LLM_API_BASE_URL"
+          test -n "$LLM_MODEL_ID"
+      - name: Install Behavior Bench
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install git+https://github.com/eliem08/behavior-bench.git
+      - name: Run evaluation gate
+        run: |
+          behavior-bench-api --help
