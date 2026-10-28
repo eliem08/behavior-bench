@@ -34,7 +34,16 @@ python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on
 
 The command writes JSON and CSV outputs under `outputs/benchmark/`. A non-zero exit status means at least one expected-substring check failed or a forbidden substring was found. These checks are intentionally simple and require human review.
 
-## 3. Compare against a baseline
+## 3. Evaluate a hosted OpenAI-compatible API
+
+Set a provider API key in your shell, then run:
+
+    export OPENAI_API_KEY="..."
+    python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --fail-on-regression
+
+Replace the example URL/model with your provider's values. The adapter uses the standard chat-completions shape. Do not put API keys in command-line arguments, source files, notebooks, or result artifacts. Review the provider's data processing and retention terms before sending sensitive prompts.
+
+## 4. Compare against a baseline
 
 Run the baseline model/test set first and preserve its `results.json`. Run the candidate using a separate output directory, then compare:
 
@@ -44,13 +53,13 @@ python compare_models.py --results outputs/baseline/results.json outputs/candida
 
 The first file is treated as the baseline and the second as the candidate. The gate flags a previously passing expected check that now fails, or newly observed forbidden-substring hits.
 
-## 4. Hardware
+## 5. Hardware
 
 - CPU: supported for small models, but inference can be slow.
 - CUDA GPU: use `--device cuda` when the installed PyTorch build and driver support it.
 - Apple Silicon: use `--device mps` when supported.
 - Google Colab: use the linked notebook to select an available accelerator.
 
-## 5. Production-readiness limitations
+## 6. Production-readiness limitations
 
 Before serving teams or customer data, add authentication, per-user authorization, tenant isolation, request and file-size limits, secure secret management, durable database-backed run history, audit logs, retention/deletion controls, dependency pinning, and security review. Do not claim these features are present until implemented and tested.
