@@ -28,3 +28,5 @@ def test_api_benchmark_writes_results_summary_and_html(tmp_path, monkeypatch):
     assert summary["category_scores"]["greeting"]["cases"] == 1
     assert (output / "report.html").exists()
     assert payload["cases"][0]["severity"] == "low"
+    assert payload["quality_gate"]["passed"] is True
+    assert "dummy-key" not in (output / "results.json").read_text(encoding="utf-8")
