@@ -20,9 +20,9 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 ### Phase 1 — Useful regression suite
 - [x] Add strict JSONL schema validation, unique case IDs, and an opt-in CLI exit code for failed checks.
 - [ ] Add semantic rubric hooks as optional pluggable evaluators; label model-graded scores separately.
-- [ ] Track latency, token counts, exceptions, and reproducibility metadata.
+- [x] Track per-case latency, local input/output token counts, and provenance metadata; API token-usage parsing and retry/error analytics remain open.
 - [x] Compare saved run artifacts by case ID and highlight changed outputs / expected-check changes.
-- [ ] Add a richer HTML diff report and category-level summaries.
+- [x] Add a self-contained escaped HTML report and category-level scorecards.
 - [ ] Add fixtures for prompt injection, refusal, factuality, structured output, and tool-use behavior.
 
 ### Phase 2 — Team-ready testing
@@ -31,7 +31,7 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 - [ ] Add a GitHub Actions example that invokes the regression gate.
 - [ ] Dataset versioning, tags, owner, severity, and review workflow.
 - [ ] Bootstrap confidence intervals and per-category scorecards.
-- [ ] HTML report export and run history.
+- [x] Export HTML reports for model and API runs; persistent run history remains open.
 
 ### Phase 3 — Final product
 A self-hosted or hosted LLM quality gate: suites live in Git, CI runs evaluation matrices, dashboards compare model/prompt releases, and teams receive actionable regression reports before rollout.
