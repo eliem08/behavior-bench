@@ -12,12 +12,14 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
 from benchmark import load_cases, assess_quality_gate
 from provenance import build_manifest
+from html_report import render_report
 
 
 def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90):
@@ -62,7 +64,9 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
     cases = load_cases(cases_path)
     rows = []
     for case in cases:
+        started = time.perf_counter()
         completion = api_completion(case["prompt"], base_url, model_id, api_key, max_new_tokens)
+        latency_ms = (time.perf_counter() - started) * 1000
         expected = case.get("expected_substring")
         forbidden = case.get("forbidden_substrings", [])
         rows.append({
@@ -73,6 +77,7 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
             "expected_pass": None if not expected else expected.casefold() in completion.casefold(),
             "forbidden_hits": [s for s in forbidden if s.casefold() in completion.casefold()],
             "completion_sha256": hashlib.sha256(completion.encode("utf-8")).hexdigest(),
+            "latency_ms": round(latency_ms, 3),
         })
     out = Path(output)
     out.mkdir(parents=True, exist_ok=True)
@@ -104,6 +109,9 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
         "cases_with_forbidden_hits": sum(bool(row["forbidden_hits"]) for row in rows),
         "quality_gate": gate, "output": str(out),
     }
+    summary["mean_latency_ms"] = round(sum(row["latency_ms"] for row in rows) / len(rows), 3) if rows else None
+    report_path = render_report({"model_id": model_id, "cases": rows, "summary": summary}, out / "report.html")
+    summary["html_report"] = report_path
     (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
 
