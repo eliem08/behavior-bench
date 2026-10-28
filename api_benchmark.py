@@ -94,7 +94,7 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
     }
     (out / "results.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     with (out / "results.csv").open("w", newline="", encoding="utf-8") as f:
-        fields = ["id", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "completion_sha256"]
+        fields = ["id", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "completion_sha256", "latency_ms"]
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for row in rows:
