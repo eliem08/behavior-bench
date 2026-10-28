@@ -15,8 +15,9 @@ Run the sample case suite, inspect completions, and review basic pass-rate and f
 
     python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl
     python benchmark.py --model-id distilgpt2 --device cuda --max-new-tokens 80
+python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on-regression
 
-Exports JSON, CSV, and a summary. JSONL cases require a prompt and may include an ID, expected substring, and forbidden substrings.
+Exports JSON, CSV, a provenance manifest, and a quality-gate summary. Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. JSONL cases require a prompt and may include a unique ID, expected substring, and forbidden substrings. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
 
 ## Compare two saved model runs
 
