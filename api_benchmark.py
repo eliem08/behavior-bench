@@ -124,6 +124,9 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
         }
     summary["category_scores"] = category_scores
     summary["mean_latency_ms"] = round(sum(row["latency_ms"] for row in rows) / len(rows), 3) if rows else None
+    payload["quality_gate"] = gate
+    payload["summary"] = summary
+    (out / "results.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     report_path = render_report({"model_id": model_id, "cases": rows, "summary": summary}, out / "report.html")
     summary["html_report"] = report_path
     (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
