@@ -22,7 +22,7 @@ from provenance import build_manifest
 from html_report import render_report
 
 
-def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90):
+def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90, system_prompt=None):
     parsed = urlsplit(base_url)
     if parsed.scheme not in ("https", "http") or not parsed.netloc:
         raise ValueError("base_url must be an absolute http:// or https:// URL")
@@ -31,9 +31,13 @@ def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeo
     if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
         raise ValueError("Use HTTPS for remote API endpoints; plain HTTP is allowed only for localhost")
     url = base_url.rstrip("/") + "/chat/completions"
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
     payload = {
         "model": model_id,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "temperature": 0,
         "max_tokens": max_new_tokens,
     }
