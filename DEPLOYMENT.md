@@ -36,7 +36,7 @@ The command writes JSON and CSV outputs under `outputs/benchmark/`. A non-zero e
 
 ## 3. Evaluate a hosted OpenAI-compatible API
 
-Set a provider API key in your shell, then run:
+The API-only runner uses Python's standard library and does not require PyTorch, Transformers, or a GPU. Set a provider API key in your shell, then run:
 
     export OPENAI_API_KEY="..."
     python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --fail-on-regression
@@ -53,13 +53,17 @@ python compare_models.py --results outputs/baseline/results.json outputs/candida
 
 The first file is treated as the baseline and the second as the candidate. The gate flags a previously passing expected check that now fails, or newly observed forbidden-substring hits.
 
-## 5. Hardware
+## 5. GitHub Actions integration
+
+Copy [examples/github-actions.yml](examples/github-actions.yml) into the target application's `.github/workflows/behavior-bench.yml`. Configure the `LLM_API_KEY` repository secret and the `LLM_API_BASE_URL` and `LLM_MODEL_ID` repository variables. The target repository must store its cases at `examples/cases.jsonl`. The workflow uploads JSON, CSV, and HTML artifacts and fails when configured substring checks fail.
+
+## 6. Hardware
 
 - CPU: supported for small models, but inference can be slow.
 - CUDA GPU: use `--device cuda` when the installed PyTorch build and driver support it.
 - Apple Silicon: use `--device mps` when supported.
 - Google Colab: use the linked notebook to select an available accelerator.
 
-## 6. Production-readiness limitations
+## 7. Production-readiness limitations
 
 Before serving teams or customer data, add authentication, per-user authorization, tenant isolation, request and file-size limits, secure secret management, durable database-backed run history, audit logs, retention/deletion controls, dependency pinning, and security review. Do not claim these features are present until implemented and tested.
