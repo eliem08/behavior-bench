@@ -24,6 +24,11 @@ def load_cases(path):
         case.setdefault("forbidden_substrings", [])
         if not isinstance(case["forbidden_substrings"], list) or not all(isinstance(s, str) for s in case["forbidden_substrings"]):
             raise ValueError(f"Line {line_number}: forbidden_substrings must be a list of strings")
+        if "expected_json" in case and case["expected_json"] is not None and not isinstance(case["expected_json"], dict):
+            raise ValueError(f"Line {line_number}: expected_json must be an object")
+        case.setdefault("required_json_keys", [])
+        if not isinstance(case["required_json_keys"], list) or not all(isinstance(key, str) and key.strip() for key in case["required_json_keys"]):
+            raise ValueError(f"Line {line_number}: required_json_keys must be a list of non-empty strings")
         case.setdefault("category", "uncategorized")
         case.setdefault("severity", "normal")
         for field in ("category", "severity"):
@@ -42,6 +47,52 @@ def load_cases(path):
 
 
 SEVERITY_ORDER = {"low": 0, "normal": 1, "high": 2, "critical": 3}
+
+
+def _lookup_json_path(value, path):
+    current = value
+    for part in path.split("."):
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        else:
+            return False, None
+    return True, current
+
+
+def _compare_expected_json(actual, expected, path="$"):
+    """Return mismatch descriptions for a recursive subset of a JSON object."""
+    errors = []
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            return [f"{path}: expected object"]
+        for key, expected_value in expected.items():
+            child_path = f"{path}.{key}"
+            if key not in actual:
+                errors.append(f"{child_path}: missing key")
+            else:
+                errors.extend(_compare_expected_json(actual[key], expected_value, child_path))
+    elif actual != expected or type(actual) is not type(expected):
+        errors.append(f"{path}: value mismatch")
+    return errors
+
+
+def evaluate_structured_output(completion, expected_json=None, required_json_keys=None):
+    """Validate JSON output, required dotted paths, and expected object subsets."""
+    expected_json = expected_json or {}
+    required_json_keys = required_json_keys or []
+    if not expected_json and not required_json_keys:
+        return {"structured_pass": None, "structured_errors": []}
+    try:
+        actual = json.loads(completion)
+    except (json.JSONDecodeError, TypeError):
+        return {"structured_pass": False, "structured_errors": ["$: completion is not valid JSON"]}
+    errors = []
+    for key in required_json_keys:
+        exists, _ = _lookup_json_path(actual, key)
+        if not exists:
+            errors.append(f"$.{key}: required key missing")
+    errors.extend(_compare_expected_json(actual, expected_json))
+    return {"structured_pass": not errors, "structured_errors": errors}
 
 
 def assess_quality_gate(rows, minimum_failing_severity=None):
@@ -64,6 +115,9 @@ def assess_quality_gate(rows, minimum_failing_severity=None):
         if row.get("forbidden_hits"):
             findings.append({**metadata, "reason": "forbidden_substring_found",
                              "matches": row["forbidden_hits"]})
+        if row.get("structured_pass") is False:
+            findings.append({**metadata, "reason": "structured_output_invalid",
+                             "details": row.get("structured_errors", [])})
     failures = findings
     if minimum_failing_severity is not None:
         threshold = SEVERITY_ORDER[minimum_failing_severity]
