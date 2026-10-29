@@ -23,7 +23,8 @@ A versioned regression-testing platform for LLM applications: define cases, run 
 - [x] Track per-case latency, local input/output token counts, and provenance metadata; API token-usage parsing and retry/error analytics remain open.
 - [x] Compare saved run artifacts by case ID and highlight changed outputs / expected-check changes.
 - [x] Add a self-contained escaped HTML report and category-level scorecards.
-- [ ] Add fixtures for prompt injection, refusal, factuality, structured output, and tool-use behavior.
+- [ ] Add fixtures for prompt injection, refusal, factuality, and tool-use behavior.
+- [x] Add optional structured JSON checks for valid JSON, required nested keys, and expected object subsets.
 
 ### Phase 2 — Team-ready testing
 - [x] Add a hosted OpenAI-compatible API adapter with API keys read from environment variables.
