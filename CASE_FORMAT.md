@@ -12,6 +12,8 @@ Each non-empty line in a JSONL file is one test case. UTF-8 is recommended. IDs 
 | `severity` | No | `low`, `normal`, `high`, or `critical`; defaults to `normal` |
 | `expected_substring` | No | Text that must occur in the completion for this simple check to pass |
 | `forbidden_substrings` | No | List of text strings that must not occur in the completion |
+| `expected_json` | No | Expected JSON object subset; nested values are checked recursively, while extra keys are allowed |
+| `required_json_keys` | No | List of required JSON key paths; use dots for nested objects, e.g. `data.count` |
 
 Example:
 
@@ -22,7 +24,8 @@ Example:
 
 ## Gate behavior
 
-- Without a severity threshold, any failed expected-substring check or forbidden-substring hit fails the quality gate.
+- Without a severity threshold, any failed expected-substring check, forbidden-substring hit, or configured structured JSON check fails the quality gate.
+- Structured checks run only when `expected_json` or `required_json_keys` is configured. Completions must be valid JSON; `expected_json` checks the configured object subset and `required_json_keys` checks required dotted paths.
 - `--minimum-failing-severity high` fails only on `high` and `critical` findings. Lower-severity findings remain in the report.
 - `--minimum-failing-severity critical` fails only on critical findings.
 - `--fail-on-regression` returns a non-zero process exit code when the selected gate fails.
