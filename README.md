@@ -37,7 +37,7 @@ For a second opinion on saved outputs, see [RUBRIC_EVALUATION.md](RUBRIC_EVALUAT
 
     python compare_models.py --results outputs/baseline/results.json outputs/candidate/results.json --labels baseline candidate --fail-on-regression
 
-The comparison utility aligns results by case ID, identifies newly failing expected checks, missing candidate cases and new forbidden-phrase hits, and exports JSON/CSV plus a static HTML report. The first file is the baseline and the second is the candidate. With --fail-on-regression, the process exits non-zero when a regression is found, making it suitable for a CI gate. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
+The comparison utility aligns results by case ID, identifies newly failing expected checks, structured JSON checks that regress from pass to fail, missing candidate cases and new forbidden-phrase hits, and exports JSON/CSV plus a static HTML report. The HTML report shows structured-check pass/fail state and validation errors alongside the case output. The first file is the baseline and the second is the candidate. With --fail-on-regression, the process exits non-zero when a regression is found, making it suitable for a CI gate. Run each model with benchmark.py first. This is a textual regression comparison, not a semantic quality ranking.
 
 ## GitHub Actions integration
 
