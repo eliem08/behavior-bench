@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
-from evaluation_core import load_cases, assess_quality_gate
+from evaluation_core import load_cases, assess_quality_gate, evaluate_structured_output
 from provenance import build_manifest
 from html_report import render_report
 
@@ -99,6 +99,7 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
             "expected_substring": expected or "",
             "expected_pass": None if not expected else expected.casefold() in completion.casefold(),
             "forbidden_hits": [s for s in forbidden if s.casefold() in completion.casefold()],
+            **evaluate_structured_output(completion, case.get("expected_json"), case.get("required_json_keys")),
             "completion_sha256": hashlib.sha256(completion.encode("utf-8")).hexdigest(),
             "latency_ms": round(latency_ms, 3),
         })
@@ -117,7 +118,7 @@ def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/a
     }
     (out / "results.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     with (out / "results.csv").open("w", newline="", encoding="utf-8") as f:
-        fields = ["id", "category", "severity", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "completion_sha256", "latency_ms"]
+        fields = ["id", "category", "severity", "prompt", "completion", "expected_substring", "expected_pass", "forbidden_hits", "structured_pass", "structured_errors", "completion_sha256", "latency_ms"]
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         for row in rows:
