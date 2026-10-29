@@ -22,7 +22,12 @@ from provenance import build_manifest
 from html_report import render_report
 
 
-def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90, system_prompt=None):
+def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeout=90, system_prompt=None, max_retries=2):
+    """Call a chat-completions endpoint, retrying only transient HTTP failures.
+
+    Retries are bounded to avoid runaway CI jobs. Authentication, validation,
+    and other non-transient HTTP errors fail immediately.
+    """
     parsed = urlsplit(base_url)
     if parsed.scheme not in ("https", "http") or not parsed.netloc:
         raise ValueError("base_url must be an absolute http:// or https:// URL")
@@ -30,6 +35,10 @@ def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeo
         raise ValueError("base_url must not contain credentials, query parameters, or a fragment")
     if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
         raise ValueError("Use HTTPS for remote API endpoints; plain HTTP is allowed only for localhost")
+    if isinstance(max_retries, bool) or not isinstance(max_retries, int) or not 0 <= max_retries <= 5:
+        raise ValueError("max_retries must be an integer from 0 to 5")
+    if timeout <= 0:
+        raise ValueError("timeout must be positive")
     url = base_url.rstrip("/") + "/chat/completions"
     messages = []
     if system_prompt:
@@ -47,14 +56,23 @@ def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeo
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        # Do not include request headers or secrets in raised messages.
-        raise RuntimeError(f"API returned HTTP {exc.code}") from None
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"API connection failed: {exc.reason}") from None
+    for attempt in range(max_retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (429, 500, 502, 503, 504) or attempt >= max_retries:
+                # Do not include request headers, response bodies, or secrets in raised messages.
+                raise RuntimeError(f"API returned HTTP {exc.code}") from None
+            retry_after = exc.headers.get("Retry-After") if exc.headers else None
+            try:
+                delay = min(5.0, max(0.0, float(retry_after))) if retry_after is not None else min(2.0, 0.25 * (2 ** attempt))
+            except (TypeError, ValueError):
+                delay = min(2.0, 0.25 * (2 ** attempt))
+            time.sleep(delay)
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"API connection failed: {exc.reason}") from None
     try:
         text = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError):
@@ -62,7 +80,6 @@ def api_completion(prompt, base_url, model_id, api_key, max_new_tokens=96, timeo
     if not isinstance(text, str):
         raise ValueError("API completion content must be a string")
     return text
-
 
 def run_api_benchmark(model_id, cases_path, base_url, api_key, output="outputs/api-benchmark", max_new_tokens=96, minimum_failing_severity=None):
     cases = load_cases(cases_path)
