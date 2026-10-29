@@ -31,6 +31,8 @@ def compare_payloads(named_payloads):
             item[f"{name}_completion"] = row.get("completion", "")
             item[f"{name}_expected_pass"] = row.get("expected_pass")
             item[f"{name}_forbidden_hits"] = row.get("forbidden_hits", [])
+            item[f"{name}_structured_pass"] = row.get("structured_pass")
+            item[f"{name}_structured_errors"] = row.get("structured_errors", [])
         reasons = []
         if baseline_name and candidate_name and baseline_name in by_model:
             if candidate_name not in by_model:
@@ -44,6 +46,10 @@ def compare_payloads(named_payloads):
                 item["expected_pass_changed"] = baseline.get("expected_pass") != candidate.get("expected_pass")
                 if baseline.get("expected_pass") is True and candidate.get("expected_pass") is False:
                     reasons.append("previously_passing_expected_check_now_fails")
+                item["structured_pass_changed"] = baseline.get("structured_pass") != candidate.get("structured_pass")
+                if baseline.get("structured_pass") is True and candidate.get("structured_pass") is False:
+                    reasons.append("previously_valid_structured_output_now_fails")
+                item["new_structured_errors"] = sorted(set(candidate.get("structured_errors", [])) - set(baseline.get("structured_errors", [])))
                 new_forbidden = sorted(set(candidate.get("forbidden_hits", [])) - set(baseline.get("forbidden_hits", [])))
                 if new_forbidden:
                     reasons.append("new_forbidden_substring_hits")
@@ -83,6 +89,8 @@ def main():
         item = dict(row)
         item["completion"] = row.get(f"{candidate_name}_completion", "") if candidate_name else ""
         item["forbidden_hits"] = row.get(f"{candidate_name}_forbidden_hits", row.get("new_forbidden_hits", []))
+        item["structured_pass"] = row.get(f"{candidate_name}_structured_pass")
+        item["structured_errors"] = row.get(f"{candidate_name}_structured_errors", [])
         report_rows.append(item)
     payload["cases"] = report_rows
     render_report(payload, out / "report.html")
