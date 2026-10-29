@@ -22,7 +22,7 @@ def compare_payloads(named_payloads):
     comparisons = []
     for case_id, by_model in sorted(indexed.items()):
         names = list(by_model)
-        item = {"id": case_id, "models_present": names}
+        item = {"id": case_id, "models_present": names, "structured_pass_changed": False, "new_structured_errors": []}
         metadata_source = by_model.get(baseline_name) or next(iter(by_model.values()))
         item["category"] = metadata_source.get("category", "uncategorized")
         item["severity"] = metadata_source.get("severity", "normal")
