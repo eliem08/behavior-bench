@@ -60,3 +60,44 @@ def test_api_completion_rejects_api_key_in_url(monkeypatch):
 def test_api_completion_requires_https_for_remote_hosts():
     with pytest.raises(ValueError, match="HTTPS"):
         api_benchmark.api_completion("hello", "http://api.example.test/v1", "demo", "key")
+
+
+def test_api_completion_retries_rate_limit_once(monkeypatch):
+    calls = {"count": 0}
+
+    def fake_urlopen(request, timeout):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise urllib.error.HTTPError(
+                request.full_url, 429, "rate limited", {"Retry-After": "0"}, None
+            )
+        return FakeResponse({"choices": [{"message": {"content": "recovered"}}]})
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_benchmark.time, "sleep", lambda _: None)
+    assert api_benchmark.api_completion(
+        "hello", "https://example.test/v1", "demo", "key", max_retries=1
+    ) == "recovered"
+    assert calls["count"] == 2
+
+
+def test_api_completion_does_not_retry_authentication_errors(monkeypatch):
+    calls = {"count": 0}
+
+    def fake_urlopen(request, timeout):
+        calls["count"] += 1
+        raise urllib.error.HTTPError(request.full_url, 401, "unauthorized", {}, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    with pytest.raises(RuntimeError, match="HTTP 401"):
+        api_benchmark.api_completion(
+            "hello", "https://example.test/v1", "demo", "key", max_retries=3
+        )
+    assert calls["count"] == 1
+
+
+def test_api_completion_validates_retry_limit():
+    with pytest.raises(ValueError, match="max_retries"):
+        api_benchmark.api_completion(
+            "hello", "https://example.test/v1", "demo", "key", max_retries=6
+        )
