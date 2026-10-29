@@ -18,7 +18,7 @@ Run the sample case suite, inspect completions, and review basic pass-rate and f
 python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --fail-on-regression
 python benchmark.py --model-id distilgpt2 --cases examples/cases.jsonl --minimum-failing-severity high
 
-Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. The optional --minimum-failing-severity flag accepts low, normal, high, or critical and only blocks at that severity or above; lower-severity findings remain visible in the report. JSONL cases require a prompt and may include a unique ID, category, severity, expected substring, and forbidden substrings. Outputs include per-case latency; local inference also records input/output token counts. A self-contained HTML report summarizes category scorecards and results. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
+Exports JSON, CSV, a provenance manifest, a static self-contained HTML report, per-case latency, and local input/output token counts (API runs include latency; provider token usage is not currently parsed). Add --fail-on-regression in scripts or CI to return a non-zero exit code when expected substrings are missing or forbidden substrings are found. The optional --minimum-failing-severity flag accepts low, normal, high, or critical and only blocks at that severity or above; lower-severity findings remain visible in the report. JSONL cases require a prompt and may include a unique ID, category, severity, expected substring, forbidden substrings, and optional structured JSON expectations (`expected_json`, `required_json_keys`). Structured checks require valid JSON output and can block the quality gate when configured. Outputs include per-case latency; local inference also records input/output token counts. A self-contained HTML report summarizes category scorecards and results. Invalid JSON, duplicate IDs, and malformed case fields are rejected with line-aware errors.
 
 ## Evaluate an OpenAI-compatible API
 
@@ -49,7 +49,7 @@ See [CASE_FORMAT.md](CASE_FORMAT.md) for the JSONL schema, category/severity con
 
 ## What the scores mean
 
-Substring checks are simple regression signals, not semantic evaluation. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
+Substring and structured JSON checks are explicit regression signals, not semantic evaluation. Structured checks validate JSON syntax, required nested key paths, and configured expected values. A passing case does not prove correctness, and a forbidden phrase may occur in a negated or quoted context. Review completions and maintain a representative, versioned test set.
 
 ## Deployment and security
 
