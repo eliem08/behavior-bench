@@ -38,3 +38,8 @@ A local-first desktop/web app that provides a single model registry, one project
 ## Product principle
 
 Make every result inspectable and reproducible. Do not market keyword heuristics as safety certification, random-weight attention as learned behavior, or one prompt pair as causal evidence.
+
+
+## Unified evaluation workflow integration
+
+The unified evaluator in `experiment-scientist/unified_evaluation.py` can run this tool as the Behavior Bench stage. It passes `NEURONLAB_WORKFLOW_ID` and `NEURONLAB_WORKFLOW_SCHEMA` into the process; manifests preserve a unique `run_id` and attach the shared `workflow_id` so the top-level workflow report can verify that artifacts belong to the same invocation.
