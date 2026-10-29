@@ -10,7 +10,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from provenance import build_manifest
 from html_report import render_report
-from evaluation_core import load_cases, assess_quality_gate
+from evaluation_core import load_cases, assess_quality_gate, evaluate_structured_output
 
 def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_tokens=96, device="auto", minimum_failing_severity=None):
     device = device if device != "auto" else ("cuda" if torch.cuda.is_available() else "mps" if getattr(torch.backends,"mps",None) and torch.backends.mps.is_available() else "cpu")
@@ -31,12 +31,13 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
         rows.append({"id":case["id"],"category":case["category"],"severity":case["severity"],"prompt":case["prompt"],"completion":completion,"expected_substring":expected or "",
           "expected_pass": None if not expected else expected.casefold() in completion.casefold(),
           "forbidden_hits":[s for s in forbidden if s.casefold() in completion.casefold()],
+          **evaluate_structured_output(completion, case.get("expected_json"), case.get("required_json_keys")),
           "completion_sha256":hashlib.sha256(completion.encode()).hexdigest(),
           "input_tokens":int(inputs["input_ids"].shape[1]),"completion_tokens":completion_tokens,"latency_ms":round(latency_ms, 3)})
     out=Path(output); out.mkdir(parents=True,exist_ok=True)
     (out/"results.json").write_text(json.dumps({"model_id":model_id,"device":device,"cases":rows,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens},inputs={"case_file":Path(cases_path).read_text(encoding="utf-8")})},indent=2,ensure_ascii=False),encoding="utf-8")
     with (out/"results.csv").open("w",newline="",encoding="utf-8") as f:
-        fields=["id","category","severity","prompt","completion","expected_substring","expected_pass","forbidden_hits","completion_sha256","input_tokens","completion_tokens","latency_ms"]
+        fields=["id","category","severity","prompt","completion","expected_substring","expected_pass","forbidden_hits","structured_pass","structured_errors","completion_sha256","input_tokens","completion_tokens","latency_ms"]
         w=csv.DictWriter(f,fieldnames=fields);w.writeheader()
         for r in rows:
             r2=dict(r);r2["forbidden_hits"]="; ".join(r["forbidden_hits"]);w.writerow(r2)
