@@ -46,3 +46,23 @@ def test_html_report_escapes_dynamic_category_metrics(tmp_path):
     assert "<img src=x>" not in content
     assert "&lt;img src=x&gt;" in content
     assert "<script>bad</script>" not in content
+
+
+def test_html_report_surfaces_structured_json_failures_and_escapes_errors(tmp_path):
+    payload = {
+        "model_id": "json-check",
+        "cases": [{
+            "id": "case-json",
+            "completion": '{"status":',
+            "structured_pass": False,
+            "structured_errors": ["<script>invalid JSON</script>"],
+        }],
+        "summary": {"quality_gate": {"passed": False}},
+    }
+    path = render_report(payload, tmp_path / "structured.html")
+    content = open(path, encoding="utf-8").read()
+    assert "Structured JSON failures" in content
+    assert ">1 / 1</div>" in content
+    assert "Structured errors" in content
+    assert "<script>invalid JSON</script>" not in content
+    assert "&lt;script&gt;invalid JSON&lt;/script&gt;" in content
