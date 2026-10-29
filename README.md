@@ -27,7 +27,7 @@ The API-only runner needs no PyTorch, Transformers, or GPU. Set your provider ke
     export OPENAI_API_KEY="..."
     python api_benchmark.py --base-url https://api.example.com/v1 --model-id your-model --cases examples/cases.jsonl --minimum-failing-severity high
 
-On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL and model with values from your provider. The adapter expects a POST /chat/completions response. API keys are not written to result files. Check your provider's data-retention terms before sending prompts.
+On Windows PowerShell, use $env:OPENAI_API_KEY = "...". Replace the example URL and model with values from your provider. The adapter expects a POST /chat/completions response. It retries transient HTTP 429/5xx responses up to two times by default, with bounded backoff (override `max_retries` when using it as a Python function; allowed range 0–5). Authentication and other non-transient errors fail immediately. API keys are not written to result files. Check your provider's data-retention terms before sending prompts.
 
 ## Optional model-graded rubric
 
