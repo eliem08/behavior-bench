@@ -35,7 +35,8 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
           "completion_sha256":hashlib.sha256(completion.encode()).hexdigest(),
           "input_tokens":int(inputs["input_ids"].shape[1]),"completion_tokens":completion_tokens,"latency_ms":round(latency_ms, 3)})
     out=Path(output); out.mkdir(parents=True,exist_ok=True)
-    (out/"results.json").write_text(json.dumps({"model_id":model_id,"device":device,"cases":rows,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens},inputs={"case_file":Path(cases_path).read_text(encoding="utf-8")})},indent=2,ensure_ascii=False),encoding="utf-8")
+    manifest = build_manifest("behavior-bench", model_id=model_id, device=device, config={"max_new_tokens": max_new_tokens, "minimum_failing_severity": minimum_failing_severity}, inputs={"case_file": Path(cases_path).read_text(encoding="utf-8")})
+    (out/"results.json").write_text(json.dumps({"model_id":model_id,"device":device,"cases":rows,"manifest":manifest},indent=2,ensure_ascii=False),encoding="utf-8")
     with (out/"results.csv").open("w",newline="",encoding="utf-8") as f:
         fields=["id","category","severity","prompt","completion","expected_substring","expected_pass","forbidden_hits","structured_pass","structured_errors","completion_sha256","input_tokens","completion_tokens","latency_ms"]
         w=csv.DictWriter(f,fieldnames=fields);w.writeheader()
@@ -43,7 +44,7 @@ def run_benchmark(model_id, cases_path, output="outputs/benchmark", max_new_toke
             r2=dict(r);r2["forbidden_hits"]="; ".join(r["forbidden_hits"]);w.writerow(r2)
     checked=[r for r in rows if r["expected_pass"] is not None]
     gate = assess_quality_gate(rows, minimum_failing_severity)
-    summary={"model_id":model_id,"device":device,"manifest":build_manifest("behavior-bench",model_id=model_id,device=device,config={"max_new_tokens":max_new_tokens, "minimum_failing_severity":minimum_failing_severity}),"total":len(rows),"expected_checks":len(checked),"expected_pass_rate":sum(bool(r["expected_pass"]) for r in checked)/len(checked) if checked else None,"cases_with_forbidden_hits":sum(bool(r["forbidden_hits"]) for r in rows),"quality_gate":gate,"output":str(out)}
+    summary={"model_id":model_id,"device":device,"manifest":manifest,"total":len(rows),"expected_checks":len(checked),"expected_pass_rate":sum(bool(r["expected_pass"]) for r in checked)/len(checked) if checked else None,"cases_with_forbidden_hits":sum(bool(r["forbidden_hits"]) for r in rows),"quality_gate":gate,"output":str(out)}
     category_scores = {}
     for category in sorted({r["category"] for r in rows}):
         group = [r for r in rows if r["category"] == category]
